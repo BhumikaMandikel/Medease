@@ -173,3 +173,150 @@ Return answer to frontend
 ```
 
 ---
+
+## 📁 Project Structure
+
+```
+MedEase-Project/
+├── README.md                          # This file
+├── medease/
+│   ├── backend/                       # Python FastAPI backend
+│   │   ├── .env                       # Environment variables (create this)
+│   │   ├── .env.example               # Environment template
+│   │   ├── .venv/                     # Python virtual environment
+│   │   ├── main.py                    # FastAPI application entry point
+│   │   ├── requirements.txt           # Python dependencies
+│   │   ├── profile.json               # User profile storage (auto-created)
+│   │   │
+│   │   ├── routers/                   # API route handlers
+│   │   │   ├── process.py            # Document processing + OCR
+│   │   │   ├── qa.py                 # Document-based Q&A
+│   │   │   ├── lifestyle.py          # General health Q&A
+│   │   │   ├── tts.py                # Text-to-speech
+│   │   │   ├── stt.py                # Speech-to-text
+│   │   │   ├── calendar.py           # Google Calendar
+│   │   │   └── profile.py            # Profile management
+│   │   │
+│   │   ├── services/                  # Business logic layer
+│   │   │   ├── ocr_service.py        # LightOnOCR integration
+│   │   │   ├── pdf_service.py        # PDF processing
+│   │   │   ├── ollama_service.py     # Gemma 4 AI calls
+│   │   │   ├── tts_service.py        # TTS model handling
+│   │   │   ├── stt_service.py        # STT model handling
+│   │   │   ├── calendar_service.py   # Google Calendar API
+│   │   │   ├── profile_service.py    # Profile CRUD + monitoring
+│   │   │   └── medicine_timing_service.py  # Meal-based timing
+│   │   │
+│   │   ├── models/                    # Data models
+│   │   │   └── schemas.py            # Pydantic schemas
+│   │
+│   ├── frontend/                      # React + Vite frontend
+│   │   ├── .env.local                # Frontend environment (create this)
+│   │   ├── package.json              # Node dependencies
+│   │   ├── vite.config.ts            # Vite configuration
+│   │   ├── tailwind.config.js        # Tailwind CSS config
+│   │   ├── index.html                # HTML entry point
+│   │   │
+│   │   └── src/
+│   │       ├── main.tsx              # React entry point
+│   │       ├── App.tsx               # Root component with routing
+│   │       ├── index.css             # Global styles
+│   │       │
+│   │       ├── components/           # React components
+│   │       │   ├── OnboardingScreen.tsx      # User profile setup
+│   │       │   ├── LanguageSelector.tsx      # Language picker
+│   │       │   ├── UploadZone.tsx            # Document upload
+│   │       │   ├── LoadingScreen.tsx         # Processing state
+│   │       │   ├── ConversationView.tsx      # Main chat interface
+│   │       │   ├── ChatBubble.tsx            # Message display
+│   │       │   ├── ResponseOutputChoice.tsx  # Audio/Text choice
+│   │       │   ├── VoiceInputButton.tsx      # Mic button
+│   │       │   ├── AudioPlayer.tsx           # TTS playback
+│   │       │   ├── EnhancedAudioControls.tsx # Audio controls
+│   │       │   ├── CalendarModal.tsx         # Calendar integration
+│   │       │   └── MonitoringModal.tsx       # Health monitoring
+│   │       │
+│   │       └── lib/                  # Utility libraries
+│   │           ├── api.ts            # Backend API calls
+│   │           ├── profileApi.ts     # Profile API calls
+│   │           ├── tts.ts            # Text-to-speech logic
+│   │           ├── stt.ts            # Speech-to-text logic
+│   │           ├── Googleauth.ts     # Google OAuth
+│   │           ├── labels.ts         # Multilingual labels
+│   │           ├── storage.ts        # localStorage utilities
+│   │           └── types.ts          # TypeScript types
+│   │
+-   └── GOOGLE_CALENDAR_SETUP.md      # Calendar setup guide
+
+```
+
+---
+### Key Endpoints
+
+#### Document Processing
+```
+POST /api/process/
+- Upload and process medical document with OCR
+- Accepts: multipart/form-data (file + language)
+- Returns: Structured analysis with medicines, instructions
+- Profile: Automatically updates conditions, allergies, monitoring
+```
+
+#### Question Answering
+```
+POST /api/qa/
+- Ask follow-up questions about the document
+- Body: { question, conversation_history, clinical_context, language }
+- Returns: AI-generated answer with profile context
+```
+
+#### Lifestyle Q&A
+```
+POST /api/lifestyle/qa
+- Ask general health questions without document
+- Body: { question, language }
+- Returns: { answer, suggested_cloud }
+- Profile: Uses conditions and allergies for personalization
+```
+
+#### Profile Management
+```
+GET /api/profile/
+- Get user profile
+- Returns: Complete profile with conditions, monitoring, visits
+
+POST /api/profile/
+- Create or update user profile
+- Body: HealthProfile object
+- Returns: Saved profile
+
+GET /api/profile/monitoring
+- Get monitoring schedule
+- Returns: List of tests with next due dates
+```
+
+#### Text-to-Speech
+```
+POST /api/tts/synthesize
+- Convert text to speech audio
+- Body: { text, language }
+- Returns: Audio file (WAV format)
+- Models: Lazy-loaded, persistent in memory
+```
+
+#### Speech-to-Text
+```
+POST /api/stt/transcribe
+- Transcribe audio to text
+- Accepts: multipart/form-data (audio file + language)
+- Returns: Transcribed text
+- Models: Lazy-loaded on first use
+```
+
+#### Google Calendar
+```
+POST /api/calendar/add-events
+- Create calendar events for medicine reminders
+- Body: { medicine_name, dosage, timing_times, duration_days, start_date, access_token }
+- Returns: { success, events_created, message }
+```

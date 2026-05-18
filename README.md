@@ -20,7 +20,6 @@
 - [Running the Application](#-running-the-application)
 - [Usage Guide](#-usage-guide)
 - [Project Structure](#-project-structure)
-- [API Documentation](#-api-documentation)
 - [Troubleshooting](#-troubleshooting)
 - [License](#-license)
 
@@ -35,16 +34,6 @@
 - **Get lifestyle advice** - Food, activity, and general health questions
 - **Schedule medications** - Automatic Google Calendar integration
 - **Interact naturally** - Voice input and audio output in multiple Indian languages
-
-### Design Philosophy
-
-The experience feels like a **warm, caring health companion** - not a clinical tool. The interface is:
-- **Personalized** - Knows your name, conditions, and preferences
-- **Conversational** - Natural language interaction
-- **Accessible** - Large text, voice support, multilingual
-- **Privacy-first** - All data stays on your device
-
----
 
 ## ✨ Key Features
 
@@ -63,18 +52,16 @@ The experience feels like a **warm, caring health companion** - not a clinical t
   - Hypertension → Daily BP, semi-annual kidney function
   - 20+ conditions with evidence-based monitoring schedules
 - **Next Due Dates**: Clear tracking of when tests are due
-- **Monitoring Dashboard**: Visual overview of all health metrics
 
 ### 🤖 AI-Powered Document Analysis
 
 #### Advanced OCR & Vision
 - **LightOnOCR-2-1B**: Specialized OCR for handwritten prescriptions
-- **Gemma 4 Vision**: Multimodal AI reads images and text together
+- **Gemma 4 Model**: Multimodal AI reads images and text together
 - **Smart PDF Processing**: Extracts text when available, uses vision for scans
-- **Medical Document Detection**: Automatically applies OCR for medical content
 
 #### Intelligent Medicine Extraction
-- **Exact Name Preservation**: Medicine names copied exactly from prescriptions
+- **Medicine Name Preservation**: Medicine names extracted from prescriptions
 - **Meal-Based Timing**: Suggests medicine times based on your meal schedule
 - **Duration Tracking**: Automatically calculates treatment duration
 - **Warning Detection**: Identifies important precautions and side effects
@@ -88,35 +75,23 @@ The experience feels like a **warm, caring health companion** - not a clinical t
 ### 🗣️ Voice & Audio Features
 
 #### Text-to-Speech (TTS)
-- **Backend TTS**: Indic TTS models (svara-TTS) for Hindi and Kannada
+- **Backend TTS**: Indic TTS model (svara-TTS) for Multiple Indian Languages
   - Natural-sounding voices
-  - Gender selection (Male/Female)
   - Consistent voice across sessions
-- **Browser TTS**: Web Speech API for English
+- **Browser TTS**: Web Speech API for English (for latency)
 - **Audio Controls**: Play, pause, stop, replay
 
 #### Speech-to-Text (STT)
 - **Backend STT**: Indic Conformer model for Indian languages
   - Supports 11 Indian languages
   - High accuracy for regional accents
-- **Browser STT**: Web Speech API for English
+- **Browser STT**: Web Speech API for English (for latency reasons)
 - **Real-time Transcription**: See text as you speak
 
 ### 🌐 Multilingual Support
 
 **Fully Supported Languages:**
-- **English** (en-IN) - Browser TTS/STT
-- **हिंदी / Hindi** (hi-IN) - Backend TTS/STT
-- **ಕನ್ನಡ / Kannada** (kn-IN) - Backend TTS/STT
-
-**Additional STT Support:**
-- Bengali, Gujarati, Malayalam, Marathi, Nepali, Punjabi, Tamil, Telugu, Assamese
-
-**Language Features:**
-- All UI labels adapt to selected language
-- AI responses in user's language
-- Medical terms transliterated to native script
-- Consistent language across all interactions
+- English,Hindi,Kannada,Bengali, Gujarati, Malayalam, Marathi, Nepali, Punjabi, Tamil, Telugu, Assamese
 
 ### 💬 Dual Q&A Modes
 
@@ -150,9 +125,6 @@ The experience feels like a **warm, caring health companion** - not a clinical t
 
 - **localStorage Persistence**: All data survives page reloads
 - **Profile Storage**: Health profile saved locally
-- **Conversation History**: Complete chat history maintained
-- **Document Cache**: Images cached for re-processing
-- **Quota Handling**: Graceful degradation if storage full
 
 ---
 
@@ -211,10 +183,10 @@ The experience feels like a **warm, caring health companion** - not a clinical t
 │  │                    Services Layer                         │   │
 │  │                                                            │   │
 │  │  OCR Service (LightOnOCR-2-1B)                            │   │
-│  │  ├─ Medical document detection                            │   │
+│  │  ├─ Medical document details extraction                   │   │
 │  │  ├─ Lazy loading (on-demand)                              │   │
-│  │  ├─ Immediate unload (memory efficient)                   │   │
-│  │  └─ Handwriting-optimized extraction                      │   │
+│  │                                                            │   │
+│  │ 
 │  │                                                            │   │
 │  │  Ollama Service (Gemma 4)                                 │   │
 │  │  ├─ Document analysis with vision                         │   │
@@ -224,7 +196,6 @@ The experience feels like a **warm, caring health companion** - not a clinical t
 │  │  └─ Q&A with conversation history                         │   │
 │  │                                                            │   │
 │  │  Profile Service                                          │   │
-│  │  ├─ Profile CRUD operations                               │   │
 │  │  ├─ Condition & allergy management                        │   │
 │  │  ├─ Monitoring schedule generation                        │   │
 │  │  ├─ Visit history tracking                                │   │
@@ -244,11 +215,6 @@ The experience feels like a **warm, caring health companion** - not a clinical t
 │  │  Medicine Timing Service                                  │   │
 │  │  ├─ Meal-based timing suggestions                         │   │
 │  │  └─ Frequency-to-times conversion                         │   │
-│  │                                                            │   │
-│  │  PDF Service (pdfplumber + pdf2image)                     │   │
-│  │  ├─ Text extraction per page                              │   │
-│  │  ├─ Image rasterization                                   │   │
-│  │  └─ Scanned PDF detection                                 │   │
 │  │                                                            │   │
 │  │  Calendar Service (Google Calendar API)                   │   │
 │  │  └─ Event creation with reminders                         │   │
@@ -350,7 +316,6 @@ Return answer to frontend
 | **Tailwind CSS** | 3.4.4 | Styling framework |
 | **Web Speech API** | Native | Browser TTS/STT for English |
 | **Google Identity Services** | Latest | OAuth 2.0 authentication |
-| **UUID** | 9.0.1 | Unique ID generation |
 
 ### Backend
 | Technology | Version | Purpose |
@@ -373,11 +338,6 @@ Return answer to frontend
 | **Indic Conformer** | STT for Indian languages | ~600MB | Lazy (first use) |
 | **svara-TTS** | TTS for Hindi/Kannada | ~500MB | Lazy (first use) |
 | **SNAC** | Audio codec for TTS | ~50MB | With TTS |
-
-### External Services
-- **Ollama**: Local LLM inference server (localhost:11434)
-- **Google Calendar API**: Calendar event creation
-- **HuggingFace**: Model downloads
 
 ---
 
@@ -419,11 +379,6 @@ Return answer to frontend
 - **GPU**: Optional but recommended (Apple Silicon MPS, NVIDIA CUDA, or CPU)
 - **OS**: macOS, Linux, or Windows 10/11
 
-### Optional
-
-- **Google Account**: For calendar integration (optional feature)
-- **HuggingFace Account**: For downloading Indic models (free)
-
 ---
 
 ## 🚀 Installation & Setup
@@ -463,8 +418,6 @@ pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-**Note**: Installation may take 10-15 minutes.
-
 #### 2.3 Set Up Ollama and Download Gemma 4
 
 ```bash
@@ -497,25 +450,6 @@ cp .env.example .env
 nano .env  # or use your preferred editor
 ```
 
-Add the following to your `.env` file:
-
-```env
-# Ollama Configuration
-OLLAMA_URL=http://localhost:11434
-
-# HuggingFace Token (required for Indic models)
-HUGGINGFACE_TOKEN=hf_your_actual_token_here
-
-# Optional: Custom cache directory for models
-HF_CACHE_DIR=/path/to/cache/directory
-
-# Google OAuth (optional - for calendar integration)
-GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=your-google-client-secret
-```
-
-**Important**: Replace `hf_your_actual_token_here` with your actual HuggingFace token.
-
 ### Step 3: Frontend Setup
 
 #### 3.1 Install Node Dependencies
@@ -537,25 +471,9 @@ touch .env.local
 # Edit the file
 nano .env.local
 ```
-
-Add the following to `.env.local`:
-
-```env
-# Google OAuth Client ID (optional - for calendar integration)
-VITE_GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
-```
-
 ### Step 4: Google Calendar Setup (Optional)
 
 See `medease/GOOGLE_CALENDAR_SETUP.md` for detailed instructions.
-
-Quick steps:
-1. Create Google Cloud Project
-2. Enable Google Calendar API
-3. Configure OAuth Consent Screen
-4. Create OAuth Client ID
-5. Add Client ID to `.env.local`
-
 ---
 
 ## ▶️ Running the Application
@@ -628,12 +546,12 @@ npm run dev
 
 #### Option 1: Upload a Medical Document
 
-1. **Select Language** (English, Hindi, or Kannada)
+1. **Select Language**
 2. **Upload Document**:
    - Drag & drop or click to browse
    - Supported: PDF, JPEG, PNG
    - Examples: Prescription, discharge summary, lab report
-3. **Wait for Processing** (10-60 seconds)
+3. **Wait for Processing**
 4. **View Results**:
    - Simplified explanation
    - Medicine list with timings
@@ -651,20 +569,9 @@ npm run dev
 
 ### Interacting with the App
 
-#### Text Input
-- Type your question in the input field
-- Click "Send" or press Enter
-
-#### Voice Input
-1. Click the microphone button
-2. Speak your question clearly
-3. Text appears automatically
-4. Click "Send"
-
-#### Audio Output
-1. Choose "Audio" when asked for output preference
-2. Listen to the response
-3. Use controls to play/pause/stop/replay
+# Text Input
+# Voice Input
+# Audio Output
 
 #### Ask Follow-Up Questions
 - About medicines: "What is this medicine for?"
@@ -672,37 +579,12 @@ npm run dev
 - About side effects: "What should I watch out for?"
 - About lifestyle: "Can I exercise while taking this?"
 
-### Adding to Google Calendar
-
-1. **Connect Calendar**:
-   - Click "📅 Connect Google Calendar"
-   - Sign in with Gmail
-   - Grant calendar access
-
-2. **Add Reminders**:
-   - Click "📅 Add Reminders"
-   - Review medicines and timings
-   - Edit times if needed
-   - Select start date
-   - Click "Add to My Calendar"
-
-3. **Check Your Calendar**:
-   - Open Google Calendar
-   - See all medicine reminders
-   - Get popup notifications
-
 ### Viewing Your Health Profile
 
 - **Conditions**: Automatically tracked from documents
 - **Allergies**: Extracted and remembered
 - **Monitoring Schedule**: Tests you need to do
 - **Visit History**: All analyzed documents
-
-### Starting a New Document
-
-- Click "New Document" button
-- Previous conversation is saved
-- Upload a new document or ask new questions
 
 ---
 
@@ -741,16 +623,6 @@ MedEase-Project/
 │   │   │
 │   │   ├── models/                    # Data models
 │   │   │   └── schemas.py            # Pydantic schemas
-│   │   │
-│   │   ├── model_cache/              # Cached AI models
-│   │   │   └── lightonocr/           # OCR model cache
-│   │   │
-│   │   ├── temp_audio/               # Temporary audio files
-│   │   │
-│   │   └── Documentation/
-│   │       ├── STT_SETUP.md          # Speech-to-text setup
-│   │       ├── OCR_INTEGRATION.md    # OCR integration details
-│   │       └── TTS_INTEGRATION.md    # Text-to-speech setup
 │   │
 │   ├── frontend/                      # React + Vite frontend
 │   │   ├── .env.local                # Frontend environment (create this)
@@ -788,22 +660,11 @@ MedEase-Project/
 │   │           ├── storage.ts        # localStorage utilities
 │   │           └── types.ts          # TypeScript types
 │   │
-│   └── GOOGLE_CALENDAR_SETUP.md      # Calendar setup guide
-│
-└── Documentation/
-    ├── MedEase_Phase1_Spec_v2.6.md   # Original product spec
-    └── medease_personalisation_spec.md  # Personalization features
+-   └── GOOGLE_CALENDAR_SETUP.md      # Calendar setup guide
+
 ```
 
 ---
-
-## 📚 API Documentation
-
-Once the backend is running, access interactive API documentation:
-
-- **Swagger UI**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc
-
 ### Key Endpoints
 
 #### Document Processing
@@ -1015,7 +876,7 @@ If you encounter issues not listed here:
 
 ## 📄 License
 
-This project is licensed under the MIT License.
+This project is licensed under the CC BY-NC 4.0 License.
 
 ---
 
@@ -1045,7 +906,6 @@ This project was built with the following goals:
 - Profile-aware AI that knows your health history
 - Automatic health monitoring schedule generation
 - Meal-based medicine timing suggestions
-- Confidence-based routing for complex questions
 - Lazy-loaded models for memory efficiency
 
 ---

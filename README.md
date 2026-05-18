@@ -567,12 +567,6 @@ npm run dev
    - "What foods should I avoid?"
 3. **Get Personalized Answers** based on your profile
 
-### Interacting with the App
-
-# Text Input
-# Voice Input
-# Audio Output
-
 #### Ask Follow-Up Questions
 - About medicines: "What is this medicine for?"
 - About dosage: "How many times should I take this?"

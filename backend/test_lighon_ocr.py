@@ -2,12 +2,10 @@
 """
 Simple test script for LightOnOCR model.
 Tests OCR extraction on medical document images.
+To Test the performance of LightOnOCR model for a single medical image
 
 Usage:
     python test_lighton_ocr.py <image_path>
-    
-Example:
-    python test_lighton_ocr.py IMG-20260505-WA0000.jpg
 """
 
 import sys

@@ -33,6 +33,56 @@ def add_minutes_to_time(t: time, minutes: int) -> time:
     return time(total_minutes // 60, total_minutes % 60)
 
 
+def parse_dose_pattern(frequency: str) -> Optional[tuple[int, List[str]]]:
+    """
+    Parse medical dose patterns like "1-1-1", "1-0-1", "0-1-0", "0-2-0", "0-0-1/2" etc.
+    Returns (dose_count, meal_indicators) tuple, or None if pattern not found.
+    
+    IMPORTANT: The count represents NUMBER OF TIMES PER DAY (number of meals), NOT total tablets.
+    
+    Common patterns:
+    - "1-1-1" = 3 times per day → (3, ['breakfast', 'lunch', 'dinner'])
+    - "1-0-1" = 2 times per day → (2, ['breakfast', 'dinner'])
+    - "0-1-0" = 1 time per day → (1, ['lunch'])
+    - "0-2-0" = 1 time per day (2 tablets at lunch) → (1, ['lunch'])
+    - "0-0-1/2" = 1 time per day (half tablet at dinner) → (1, ['dinner'])
+    
+    Returns:
+        Tuple of (times_per_day, meal_list) where meal_list indicates which meals
+        Or None if no pattern found
+    """
+    import re
+    # Match patterns like "1-1-1", "1-0-1", "0-2-0", "0-0-1/2" etc.
+    # Allow for fractions like "1/2" or decimals
+    pattern = re.search(r'\b([\d/]+)-([\d/]+)-([\d/]+)(?:-([\d/]+))?\b', frequency)
+    if pattern:
+        dose_strings = [d for d in pattern.groups() if d is not None]
+        meals = ['breakfast', 'lunch', 'dinner', 'bedtime'][:len(dose_strings)]
+        
+        # Parse each dose (handle fractions and decimals)
+        doses = []
+        for d in dose_strings:
+            if '/' in d:
+                # Handle fractions like "1/2"
+                parts = d.split('/')
+                doses.append(float(parts[0]) / float(parts[1]) if len(parts) == 2 else 0)
+            else:
+                doses.append(float(d))
+        
+        # Build list of meals where dose > 0
+        # Count is NUMBER OF MEALS (times per day), not total tablets
+        meal_list = []
+        for dose, meal in zip(doses, meals):
+            if dose > 0:
+                # Any non-zero dose means take medicine at that meal (once)
+                # The dose value (1, 2, 1/2) indicates HOW MUCH, not HOW MANY TIMES
+                meal_list.append(meal)
+        
+        times_per_day = len(meal_list)
+        return (times_per_day, meal_list) if times_per_day > 0 else None
+    return None
+
+
 def calculate_medicine_timings(
     frequency: str,
     meal_times: MealTimes,
@@ -42,7 +92,7 @@ def calculate_medicine_timings(
     Calculate optimal medicine timing based on frequency and meal schedule.
     
     Args:
-        frequency: Medicine frequency (e.g., "twice a day", "three times a day", "once daily")
+        frequency: Medicine frequency (e.g., "twice a day", "three times a day", "1-1-1", "once daily")
         meal_times: User's meal schedule from profile
         timing_preference: "before_meal" (30 min before) or "after_meal" (30 min after)
     
@@ -50,6 +100,20 @@ def calculate_medicine_timings(
         List of time strings in HH:MM format (24-hour)
     """
     frequency_lower = frequency.lower()
+    
+    # First, check for dose pattern notation (e.g., "1-1-1", "0-2-0")
+    dose_pattern = parse_dose_pattern(frequency)
+    if dose_pattern is not None:
+        dose_count, meal_indicators = dose_pattern
+        # Use the dose count to determine frequency
+        if dose_count == 4:
+            frequency_lower = "four times a day"
+        elif dose_count == 3:
+            frequency_lower = "three times a day"
+        elif dose_count == 2:
+            frequency_lower = "twice a day"
+        elif dose_count == 1:
+            frequency_lower = "once a day"
     
     # Parse meal times with fallbacks
     breakfast_time = (parse_time(meal_times.breakfast) if meal_times.breakfast else None) or time(8, 0)
@@ -60,30 +124,31 @@ def calculate_medicine_timings(
     offset_minutes = -30 if timing_preference == "before_meal" else 30
     
     # Calculate timings based on frequency
+    # IMPORTANT: Check more specific patterns FIRST to avoid false matches
     timings = []
     
-    if "once" in frequency_lower or "daily" in frequency_lower or "1" in frequency_lower:
-        # Once daily - typically morning after breakfast
-        timings.append(time_to_str(add_minutes_to_time(breakfast_time, offset_minutes)))
-    
-    elif "twice" in frequency_lower or "2" in frequency_lower or "two times" in frequency_lower:
-        # Twice daily - morning and evening
-        timings.append(time_to_str(add_minutes_to_time(breakfast_time, offset_minutes)))
-        timings.append(time_to_str(add_minutes_to_time(dinner_time, offset_minutes)))
-    
-    elif "three times" in frequency_lower or "thrice" in frequency_lower or "3" in frequency_lower:
-        # Three times daily - after each meal
-        timings.append(time_to_str(add_minutes_to_time(breakfast_time, offset_minutes)))
-        timings.append(time_to_str(add_minutes_to_time(lunch_time, offset_minutes)))
-        timings.append(time_to_str(add_minutes_to_time(dinner_time, offset_minutes)))
-    
-    elif "four times" in frequency_lower or "4" in frequency_lower:
+    if "four times" in frequency_lower or ("4" in frequency_lower and "times" in frequency_lower):
         # Four times daily - spread throughout the day
         timings.append(time_to_str(add_minutes_to_time(breakfast_time, offset_minutes)))
         timings.append(time_to_str(add_minutes_to_time(lunch_time, offset_minutes)))
         timings.append(time_to_str(add_minutes_to_time(dinner_time, offset_minutes)))
         # Add bedtime dose (2 hours after dinner)
         timings.append(time_to_str(add_minutes_to_time(dinner_time, 120)))
+    
+    elif "three times" in frequency_lower or "thrice" in frequency_lower or ("3" in frequency_lower and "times" in frequency_lower):
+        # Three times daily - after each meal
+        timings.append(time_to_str(add_minutes_to_time(breakfast_time, offset_minutes)))
+        timings.append(time_to_str(add_minutes_to_time(lunch_time, offset_minutes)))
+        timings.append(time_to_str(add_minutes_to_time(dinner_time, offset_minutes)))
+    
+    elif "twice" in frequency_lower or ("2" in frequency_lower and "times" in frequency_lower) or "two times" in frequency_lower:
+        # Twice daily - morning and evening
+        timings.append(time_to_str(add_minutes_to_time(breakfast_time, offset_minutes)))
+        timings.append(time_to_str(add_minutes_to_time(dinner_time, offset_minutes)))
+    
+    elif "once" in frequency_lower or ("1" in frequency_lower and "time" in frequency_lower and "three" not in frequency_lower) or "daily" in frequency_lower:
+        # Once daily - typically morning after breakfast
+        timings.append(time_to_str(add_minutes_to_time(breakfast_time, offset_minutes)))
     
     elif "every" in frequency_lower:
         # Parse "every X hours" pattern
@@ -130,13 +195,21 @@ def enhance_medicine_timings(
         frequency_lower = frequency.lower()
         
         # Determine expected number of times based on frequency
+        # IMPORTANT: Check dose patterns FIRST (e.g., "1-1-1"), then text patterns
         expected_count = 2  # Default for "twice a day"
-        if "once" in frequency_lower or "daily" in frequency_lower or "1" in frequency_lower:
-            expected_count = 1
-        elif "three times" in frequency_lower or "thrice" in frequency_lower or "3" in frequency_lower:
-            expected_count = 3
-        elif "four times" in frequency_lower or "4" in frequency_lower:
+        
+        # First, try to parse dose pattern notation (e.g., "1-1-1", "1-0-1")
+        dose_pattern = parse_dose_pattern(frequency)
+        if dose_pattern is not None:
+            expected_count, meal_indicators = dose_pattern
+        elif "four times" in frequency_lower or ("4" in frequency_lower and "times" in frequency_lower):
             expected_count = 4
+        elif "three times" in frequency_lower or "thrice" in frequency_lower or ("3" in frequency_lower and "times" in frequency_lower):
+            expected_count = 3
+        elif "twice" in frequency_lower or ("2" in frequency_lower and "times" in frequency_lower):
+            expected_count = 2
+        elif "once" in frequency_lower or ("1" in frequency_lower and "time" in frequency_lower and "three" not in frequency_lower):
+            expected_count = 1
         elif "every" in frequency_lower:
             # For "every X hours", calculate based on 24 hours
             import re
@@ -148,8 +221,17 @@ def enhance_medicine_timings(
         # Get current timing_times
         current_timings = medicine.get("timing_times", [])
         
-        # Only calculate if timing_times is empty, incomplete, or has wrong count
-        if not current_timings or len(current_timings) < expected_count:
+        # ALWAYS recalculate timing_times for consistency with meal schedule
+        # The AI-provided times might not align with user's actual meal times
+        # We only skip if timing_times already has the CORRECT count AND matches expected pattern
+        should_recalculate = True
+        
+        if current_timings and len(current_timings) == expected_count:
+            # Times exist and count matches - but we still recalculate to align with meal schedule
+            # This ensures consistency across all medicines
+            should_recalculate = True  # Always recalculate for meal alignment
+        
+        if should_recalculate:
             # Determine timing preference based on medicine instructions
             # Common patterns: "before food", "after food", "with food"
             timing_pref = "after_meal"  # Default
@@ -171,3 +253,5 @@ def enhance_medicine_timings(
     
     return medicines
 
+
+# Made with Bob

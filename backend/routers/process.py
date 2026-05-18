@@ -342,23 +342,44 @@ Return ONLY valid JSON (no markdown):
 
     # ── 6.5. Enhance medicine timings with meal schedule ───────────────────
     try:
-        # Load profile to get meal times
+        # Load profile to get meal times (or use defaults if not set)
+        from models.schemas import MealTimes
         profile = load_profile()
         
-        # Enhance medicine timings if they're empty
-        if result.medicines and profile.meal_times:
+        # ALWAYS enhance medicine timings if medicines exist
+        # The enhancement function has default fallback times (8:00, 13:00, 20:00)
+        if result.medicines:
+            # Use profile meal times if available, otherwise create empty MealTimes (function will use defaults)
+            meal_times = profile.meal_times if (profile and profile.meal_times) else MealTimes()
+            
+            print(f"Enhancing medicine timings:")
+            if meal_times.breakfast or meal_times.lunch or meal_times.dinner:
+                print(f"  Using profile meal times:")
+                print(f"    Breakfast: {meal_times.breakfast or '08:00 (default)'}")
+                print(f"    Lunch: {meal_times.lunch or '13:00 (default)'}")
+                print(f"    Dinner: {meal_times.dinner or '20:00 (default)'}")
+            else:
+                print(f"  Using default meal times: 08:00, 13:00, 20:00")
+            
             medicines_list = [med.dict() for med in result.medicines]
-            enhanced_medicines = enhance_medicine_timings(medicines_list, profile.meal_times)
+            enhanced_medicines = enhance_medicine_timings(medicines_list, meal_times)
             
             # Update result with enhanced timings
             for i, enhanced_med in enumerate(enhanced_medicines):
                 if i < len(result.medicines):
-                    result.medicines[i].timing_times = enhanced_med.get("timing_times", [])
+                    old_times = result.medicines[i].timing_times
+                    new_times = enhanced_med.get("timing_times", [])
+                    result.medicines[i].timing_times = new_times
+                    print(f"  {result.medicines[i].name}: {old_times} → {new_times}")
             
             print(f"✓ Enhanced medicine timings based on meal schedule")
+        else:
+            print("No medicines to enhance")
     except Exception as e:
         # Timing enhancement failure should not break the flow
-        print(f"Warning: Medicine timing enhancement failed: {e}")
+        print(f"❌ Medicine timing enhancement failed: {e}")
+        import traceback
+        traceback.print_exc()
 
     # ── 7. Extract and merge profile data (silent, never breaks flow) ──────
     try:

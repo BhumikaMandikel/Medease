@@ -177,17 +177,15 @@
 │  │  • /api/calendar  - Google Calendar integration          │   │
 │  │  • /api/profile   - User profile management              │   │
 │  └──────────────────────────────────────────────────────────┘   │
-│                            │                                      │
-│                            ↓                                      │
-│  ┌──────────────────────────────────────────────────────────┐   │
+│                            │                                     │
+│                            ↓                                     │
+│  ┌──────────────────────────────────────────────────────────┐    │
 │  │                    Services Layer                         │   │
-│  │                                                            │   │
+│  │                                                           │   │
 │  │  OCR Service (LightOnOCR-2-1B)                            │   │
 │  │  ├─ Medical document details extraction                   │   │
 │  │  ├─ Lazy loading (on-demand)                              │   │
-│  │                                                            │   │
-│  │ 
-│  │                                                            │   │
+│  │                                                           │   │
 │  │  Ollama Service (Gemma 4)                                 │   │
 │  │  ├─ Document analysis with vision                         │   │
 │  │  ├─ Profile context injection                             │   │
